@@ -1,11 +1,13 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 )
 
@@ -43,5 +45,15 @@ func handleRequests() {
 }
 
 func main() {
+
+	db, err := sql.Open("mysql", "pritimaysaura:daddydidadeadlydeed@tcp(db4free.net:3306)/shopping_schema")
+
+	if err != nil {
+		panic(err.Error)
+	}
+
+	defer db.Close()
+
+	fmt.Println("Successfully connected to mysql database")
 	handleRequests()
 }
