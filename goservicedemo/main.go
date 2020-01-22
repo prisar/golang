@@ -19,6 +19,10 @@ type Article struct {
 
 type Articles []Article
 
+type User struct {
+	Name string `json:"Name"`
+}
+
 func allArticles(w http.ResponseWriter, r *http.Request) {
 	articles := Articles{
 		Article{Title: "Test Title", Desc: "Descrition", Content: "Hello World"},
@@ -55,13 +59,30 @@ func main() {
 
 	fmt.Println("Successfully connected to mysql database")
 
-	insert, err := db.Query("INSERT INTO `shopping_schema`.`user` (`first_name`, `last_name`, `email`, `password`, `phone_number`) VALUES ('test', 'go', 'testgo1@gmail.com', '07a1fe7cfa9c519c78eeed4e099ba603', '9298383831') ")
+	// insert, err := db.Query("INSERT INTO `shopping_schema`.`user` (`first_name`, `last_name`, `email`, `password`, `phone_number`) VALUES ('test', 'go', 'testgo1@gmail.com', '07a1fe7cfa9c519c78eeed4e099ba603', '9298383831') ")
 
+	// if err != nil {
+	// 	panic(err.Error)
+	// }
+	// defer insert.Close()
+	// fmt.Println("Successfully inserted into mysql database")
+
+	results, err := db.Query("Select first_name from user")
 	if err != nil {
 		panic(err.Error)
 	}
-	defer insert.Close()
-	fmt.Println("Successfully inserted into mysql database")
+	defer results.Close()
+
+	for results.Next() {
+		var user User
+
+		err = results.Scan(&user.Name)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		fmt.Println(user.Name)
+	}
 
 	handleRequests()
 }
