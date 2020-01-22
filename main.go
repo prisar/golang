@@ -45,10 +45,12 @@ func handleRequests() {
 	router.HandleFunc("/", homePage).Methods("GET")
 	router.HandleFunc("/articles", allArticles).Methods("GET")
 	router.HandleFunc("/articles", postArticle).Methods("POST")
-	log.Fatal(http.ListenAndServe(":8081", router))
+	log.Fatal(http.ListenAndServe(":443", router))
 }
 
 func main() {
+
+	handleRequests()
 
 	db, err := sql.Open("mysql", "pritimaysaura:daddydidadeadlydeed@tcp(db4free.net:3306)/shopping_schema")
 
@@ -83,6 +85,4 @@ func main() {
 
 		fmt.Println(user.Name)
 	}
-
-	handleRequests()
 }
