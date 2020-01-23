@@ -119,6 +119,13 @@ func loggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func commonMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		next.ServeHTTP(w, r)
+	})
+}
+
 // Initialize it somewhere
 func (amw *authenticationMiddleware) Populate() {
 	amw.tokenUsers["00000000"] = "user0"
@@ -159,6 +166,8 @@ func handleRequests() {
 	amw.Populate()
 
 	router.Use(amw.Middleware)
+
+	router.Use(commonMiddleware)
 
 	router.HandleFunc("/api/health", HealthCheckHandler)
 
