@@ -8,3 +8,10 @@ go build -o bin/golang -v
 ### go mod
 
 go mod init github.com/prisar/golang
+
+
+### url
+
+ https://stormy-plateau-96701.herokuapp.com
+
+ ### gorm

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -10,7 +9,16 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
+
+type Product struct {
+	gorm.Model
+	Code  string
+	Price uint
+}
 
 type Article struct {
 	Title   string `json:"Title"`
@@ -20,8 +28,23 @@ type Article struct {
 
 type Articles []Article
 
+var db *gorm.DB
+
 type User struct {
-	Name string `json:"Name"`
+	gorm.Model
+	Name  string
+	Email string
+}
+
+func InitialMigration() {
+	db, err := gorm.Open("sqlite3", "test.db")
+	if err != nil {
+		fmt.Println(err.Error())
+		panic("Failed tot connect to database")
+	}
+	defer db.Close()
+
+	db.AutoMigrate(&User{})
 }
 
 func allArticles(w http.ResponseWriter, r *http.Request) {
@@ -40,6 +63,38 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Homepage")
 }
 
+func AllUsers(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("all users called")
+	db, err := gorm.Open("sqlite3", "test.db")
+	if err != nil {
+		fmt.Println(err.Error())
+		panic("Failed tot connect to database")
+	}
+	defer db.Close()
+
+	var users []User
+	db.Find(&users)
+	json.NewEncoder(w).Encode(users)
+}
+
+func NewUser(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("all users called")
+	db, err := gorm.Open("sqlite3", "test.db")
+	if err != nil {
+		fmt.Println(err.Error())
+		panic("Failed tot connect to database")
+	}
+	defer db.Close()
+
+	vars := mux.Vars(r)
+	name := vars["name"]
+	email := vars["email"]
+	db.Create(&User{Name: name, Email: email})
+	var user User
+	db.First(&user, "name = ?", name)
+	json.NewEncoder(w).Encode(user)
+}
+
 func handleRequests() {
 	port := os.Getenv("PORT")
 
@@ -51,45 +106,15 @@ func handleRequests() {
 
 	router.HandleFunc("/", homePage).Methods("GET")
 	router.HandleFunc("/articles", allArticles).Methods("GET")
+	router.HandleFunc("/users", AllUsers).Methods("GET")
 	router.HandleFunc("/articles", postArticle).Methods("POST")
+	router.HandleFunc("/users/{name}/{email}", NewUser).Methods("POST")
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), router))
 }
 
 func main() {
 
+	InitialMigration()
+
 	handleRequests()
-
-	db, err := sql.Open("mysql", "pritimaysaura:daddydidadeadlydeed@tcp(db4free.net:3306)/shopping_schema")
-
-	if err != nil {
-		panic(err.Error)
-	}
-	defer db.Close()
-
-	fmt.Println("Successfully connected to mysql database")
-
-	// insert, err := db.Query("INSERT INTO `shopping_schema`.`user` (`first_name`, `last_name`, `email`, `password`, `phone_number`) VALUES ('test', 'go', 'testgo1@gmail.com', '07a1fe7cfa9c519c78eeed4e099ba603', '9298383831') ")
-
-	// if err != nil {
-	// 	panic(err.Error)
-	// }
-	// defer insert.Close()
-	// fmt.Println("Successfully inserted into mysql database")
-
-	results, err := db.Query("Select first_name from user")
-	if err != nil {
-		panic(err.Error)
-	}
-	defer results.Close()
-
-	for results.Next() {
-		var user User
-
-		err = results.Scan(&user.Name)
-		if err != nil {
-			panic(err.Error())
-		}
-
-		fmt.Println(user.Name)
-	}
 }
